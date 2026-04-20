@@ -38,7 +38,9 @@ bun run index.ts <command> [args]
 | `search <query>` | Find businesses |
 | `services <company_id>` | List bookable services with prices |
 | `slots <company> <service> [date]` | Show available time slots (7 days) |
+| `next <company> <service> [date]` | Find the next available slot in a wider window |
 | `book <company> <service> <datetime> [employee]` | Book an appointment |
+| `book-next <company> <service> [date] [employee]` | Find and book the next available slot automatically |
 | `cancel <event_id>` | Cancel a booking |
 | `bookings` | List upcoming bookings |
 
@@ -53,12 +55,17 @@ bun run index.ts search "Skuggi"
 bun run index.ts services p6bgkzYaew8gpQrxT
 # → Barnaklipping | ID: fCvza4R8BLRS7gHnh | 30min | 5,900 ISK
 
-# When's Pablo free?
+# Show upcoming slots
 bun run index.ts slots p6bgkzYaew8gpQrxT fCvza4R8BLRS7gHnh 2026-03-30
-# → 2026-03-30: 11:30 (employee: kmtPSWQ7LDuWh2XSr)
 
-# Book it
+# Or just ask for the next one
+bun run index.ts next p6bgkzYaew8gpQrxT fCvza4R8BLRS7gHnh 2026-03-30
+
+# Book an exact slot
 bun run index.ts book p6bgkzYaew8gpQrxT fCvza4R8BLRS7gHnh 2026-03-30T11:30:00Z kmtPSWQ7LDuWh2XSr
+
+# Or let moona find and book the next available slot for you
+bun run index.ts book-next p6bgkzYaew8gpQrxT fCvza4R8BLRS7gHnh 2026-03-30
 
 # Changed your mind?
 bun run index.ts cancel 2MypYGIJbBhYGzYo2cJiTKK1
@@ -73,12 +80,24 @@ bun run index.ts cancel 2MypYGIJbBhYGzYo2cJiTKK1
 
 ## OpenClaw integration
 
-Point your agent at this CLI. The commands are stateless and composable — pipe
-`search` into `services` into `slots` into `book`. Your agent figures out the
-IDs, you get a confirmation. Cancel is one command with the event ID.
+Point your agent at this CLI. The commands are stateless and composable, but now
+it can also do the common “just find the next available appointment and book it”
+flow directly.
+
+Good general flow:
+- `search` to find the business
+- `services` to inspect offerings
+- `next` to find the earliest availability
+- `book-next` to book it immediately
 
 The token lives at `~/.noona-token` so it persists across sessions. No browser,
 no cookies, no OAuth dance. Just a JWT and a phone number.
+
+## Notes
+
+- `book` now accepts ISO datetimes without timezone suffix and assumes `Z`
+- `next` searches a broader rolling window, useful when the 7-day `slots` view is empty
+- `book-next` is intended for agents and other automation where minimizing back-and-forth matters
 
 ## API notes
 
